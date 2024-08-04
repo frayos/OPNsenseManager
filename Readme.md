@@ -1,3 +1,6 @@
+# MULTIPLE PROFILE ARE NOT WORKING YET
+
+
 OPNsense firewall manager is used to manage rules created with the firewall automation plugin and is intended to run on Android phones. This app is given to clients who aren't very technical and need something more simplistic than the web interface provided by OPNsense, so it is intentionally light in its capabilities. It provides the clients the ability to conduct immediate actions and then raise a ticket to me to go in and make configuration changes as needed.
 
 If you found this app useful 
