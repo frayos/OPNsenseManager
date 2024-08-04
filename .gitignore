@@ -1,2 +1,7 @@
-bin/
-.**/
+.*
+!/.gitignore
+*.pyo
+*.pyc
+.ropeproject
+bin
+.buildozer
