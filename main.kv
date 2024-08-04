@@ -2,6 +2,20 @@
     elevation: 3
     -height: "56dp"
 
+<ProfileSelectionScreen>:
+    name: "profile_selection"
+    MDBoxLayout:
+        orientation: 'vertical'
+        MDTopAppBar:
+            title: "Select Profile"
+        ScrollView:
+            MDList:
+                id: profile_list
+        MDFloatingActionButton:
+            icon: "plus"
+            pos_hint: {"center_x": .9, "center_y": .1}
+            on_release: app.show_create_profile_dialog()
+
 <DrawerClickableItem@MDNavigationDrawerItem>
     focus_color: "#e7e4c0"
     unfocus_color: "#fffcf4"
@@ -193,14 +207,21 @@ Screen:
                             icon: 'clipboard-list-outline'
                             
                             MDFloatLayout:
+                                MDLabel:
+                                    text: f"Current Profile: {app.current_profile_name}"
+                                    pos_hint: {'center_x': .5, 'center_y': .95}
+                                MDFillRoundFlatButton:
+                                    text: "Change Profile"
+                                    pos_hint: {'center_x': .5, 'center_y': .85}
+                                    on_release: app.show_profile_selection()
                                 MDTextField:
                                     id: api_key
-                                    pos_hint: {'center_x': .5, 'center_y': .9}
+                                    pos_hint: {'center_x': .5, 'center_y': .75}
                                     size_hint_x: .9
                                     hint_text: "Enter API key"                  
                                 MDTextField:
                                     id: api_secret
-                                    pos_hint: {'center_x': .5, 'center_y': .8}
+                                    pos_hint: {'center_x': .5, 'center_y': .65}
                                     size_hint_x: .9                          
                                     hint_text: "Enter API secret"
                                     write_tab: False
@@ -348,3 +369,8 @@ Screen:
                         nav_drawer.set_state("close")
                         screen_manager.current = 'login'
                         app.logout()
+                
+                DrawerClickableItem:
+                    id: profile_btn
+                    text: f"Current Profile: {app.current_profile_name}"
+                    on_release: app.show_profile_selection()

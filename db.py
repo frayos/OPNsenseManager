@@ -11,11 +11,18 @@ def create_tables():
     uuid TEXT NOT NULL UNIQUE
     );""")
 
-    db.execute("""CREATE TABLE  IF NOT EXISTS api_info(
+    db.execute("""CREATE TABLE IF NOT EXISTS api_info(
     id integer PRIMARY KEY,
-    api_key TEXT NOT NULL UNIQUE,
-    api_secret TEXT NOT NULL UNIQUE,
-    url TEXT NOT NULL UNIQUE,
+    profile_id INTEGER,
+    api_key TEXT NOT NULL,
+    api_secret TEXT NOT NULL,
+    url TEXT NOT NULL,
     port INTEGER,
-    password BLOB
+    password BLOB,
+    FOREIGN KEY (profile_id) REFERENCES profiles(id)
+    );""")
+
+    db.execute("""CREATE TABLE IF NOT EXISTS profiles(
+    id integer PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
     );""")

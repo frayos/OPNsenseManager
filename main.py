@@ -38,6 +38,11 @@ class MainApp(MDApp):
     create_tables()
     db.execute("""SELECT * from api_info""")
     api_info = db.fetchall()
+    current_profile_id = None
+    current_profile_name = StringProperty("")
+
+
+
     if len(api_info) > 0:
         url = api_info[0][3]
         port = api_info[0][4]
@@ -64,20 +69,34 @@ class MainApp(MDApp):
         "Reload list": "reload",
         "Flush ARP": "delete",
     }
+    def create_profile(self, name):
+        db.execute("INSERT INTO profiles (name) VALUES (?)", (name,))
+        mydb.commit()
+
+    def get_profiles(self):
+        db.execute("SELECT * FROM profiles")
+        return db.fetchall()
+
+    def show_profile_selection(self):
+        self.root.ids.screen_manager.current = "profile_selection"
+
+    def switch_profile(self, profile_id):
+        self.current_profile_id = profile_id
+        db.execute("SELECT name FROM profiles WHERE id = ?", (profile_id,))
+        self.current_profile_name = db.fetchone()[0]
+        self.update_api_info()
 
     def on_start(self):
         """Runs all on start functions, database creation and queries, rule status checks whatever else needs to
         happen on start"""
-
-        api_info = self.get_api_info()
-        if len(api_info) > 0:
-            if api_info[0][5] != '':
-                self.root.ids.screen_manager.current = "login"
-            else:
-                self.after_login_checks(api_info)
+        profiles = self.get_profiles()
+        if not profiles:
+            self.root.ids.screen_manager.current = "create_profile"
+        elif len(profiles) == 1:
+            self.switch_profile(profiles[0][0])
+            self.after_login_checks()
         else:
-            self.root.ids.screen_manager.current = "settings"
-            self.message_output("Info", "Enter API info")
+            self.root.ids.screen_manager.current = "profile_selection"
 
     def login_check(self):
         api_info = self.get_api_info()
@@ -90,6 +109,37 @@ class MainApp(MDApp):
             self.root.ids.login_menu_btn.opacity = 1
         else:
             self.message_output("Error", "Check password")
+
+    def show_create_profile_dialog(self):
+        self.dialog = MDDialog(
+            title="Create New Profile",
+            type="custom",
+            content_cls=MDTextField(hint_text="Profile Name"),
+            buttons=[
+                MDFlatButton(text="CANCEL", on_release=self.close_dialog),
+                MDFlatButton(text="CREATE", on_release=self.create_profile_from_dialog),
+            ],
+        )
+        self.dialog.open()
+
+    def create_profile_from_dialog(self, *args):
+        profile_name = self.dialog.content_cls.text
+        if profile_name:
+            self.create_profile(profile_name)
+            self.close_dialog()
+            self.update_profile_list()
+
+    def update_profile_list(self):
+        profile_list = self.root.ids.profile_list
+        profile_list.clear_widgets()
+        for profile in self.get_profiles():
+            item = OneLineListItem(text=profile[1], on_release=lambda x, id=profile[0]: self.select_profile(id))
+            profile_list.add_widget(item)
+
+    def select_profile(self, profile_id):
+        self.switch_profile(profile_id)
+        self.root.ids.screen_manager.current = "rules"
+        self.after_login_checks()
 
     def after_login_checks(self, api_info):
         self.set_api_info_text(api_info)
@@ -118,6 +168,22 @@ class MainApp(MDApp):
         except requests.exceptions.InvalidSchema:
             self.invalid_url()
             pass
+    def edit_profile(self, profile_id, new_name):
+        db.execute("UPDATE profiles SET name = ? WHERE id = ?", (new_name, profile_id))
+        mydb.commit()
+        self.update_profile_list()
+
+    def delete_profile(self, profile_id):
+        db.execute("DELETE FROM profiles WHERE id = ?", (profile_id,))
+        db.execute("DELETE FROM api_info WHERE profile_id = ?", (profile_id,))
+        mydb.commit()
+        self.update_profile_list()
+
+    def check_profile_selected(self):
+        if self.current_profile_id is None:
+            self.message_output("Error", "No profile selected. Please select a profile.")
+            return False
+        return True
 
     def logout(self):
         self.root.ids.ruleList.clear_widgets()
@@ -142,7 +208,6 @@ class MainApp(MDApp):
         return self.rows
 
     def url_request_get(self, url):
-        """Handles all get request for checking status with firewall API"""
         check = requests.get(
             url=url, timeout=5, auth=(self.key, self.secret), verify=False
         )
@@ -184,6 +249,15 @@ class MainApp(MDApp):
             self.root.ids.url_port.text = f"{api_info[0][4]}"
             if api_info[0][5] != "":
                 self.root.ids.password_txt.text = "Password set"
+    
+    def update_api_info(self):
+        db.execute("SELECT * FROM api_info WHERE profile_id = ?", (self.current_profile_id,))
+        api_info = db.fetchone()
+        if api_info:
+            self.url = api_info[3]
+            self.port = api_info[4]
+            self.key = api_info[1]
+            self.secret = api_info[2]
 
     def arp_callbacks(self, instance):
         """Callback handler for action button on device list"""
@@ -249,8 +323,9 @@ class MainApp(MDApp):
                 try:
                     db.execute(
                         f"""INSERT INTO api_info(
-                                    api_key, api_secret, url, port, password) VALUES
-                                    ('{key}', '{secret}', '{url}', '{port}', '{stored_hash}')"""
+                        profile_id, api_key, api_secret, url, port, password) VALUES
+                        (?, ?, ?, ?, ?, ?)""",
+                        (self.current_profile_id, key, secret, url, port, stored_hash)
                     )
                 finally:
                     mydb.commit()

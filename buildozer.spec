@@ -52,7 +52,7 @@ presplash.filename = %(source.dir)s/images/splash.png
 icon.filename = %(source.dir)s/images/icon.png
 
 # (str) Supported orientation (one of landscape, sensorLandscape, portrait or all)
-orientation = all
+orientation = portrait
 
 # (list) List of service to declare
 #services = NAME:ENTRYPOINT_TO_PY,NAME2:ENTRYPOINT2_TO_PY
@@ -88,7 +88,7 @@ fullscreen = 0
 android.permissions = INTERNET
 
 # (int) Target Android API, should be as high as possible.
-#android.api = 30
+android.api = 34
 
 # (int) Minimum API your APK will support.
 #android.minapi = 27
@@ -124,6 +124,7 @@ android.permissions = INTERNET
 # the default, you will be shown the license when first running
 # buildozer.
 # android.accept_sdk_license = False
+android.accept_sdk_license = True
 
 # (str) Android entry point, default is ok for Kivy-based app
 #android.entrypoint = org.renpy.android.PythonActivity
@@ -219,7 +220,7 @@ android.logcat_filters = *:S python:D
 #android.copy_libs = 1
 
 # (str) The Android arch to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.arch = armeabi-v7a
+android.archs = arm64-v8a
 
 # (int) overrides automatic versionCode computation (used in build.gradle)
 # this is not the same as app version and should only be edited if you know what you're doing
